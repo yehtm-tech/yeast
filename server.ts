@@ -187,13 +187,19 @@ app.post("/api/generate-report", async (req, res) => {
 
 // Set up server-side routing based on environment
 async function startServer() {
-  if (process.env.NODE_ENV !== "production") {
+  const isProduction =
+    process.env.NODE_ENV === "production" ||
+    (typeof __filename !== "undefined" && (__filename.endsWith("server.cjs") || __filename.includes(path.join("dist"))));
+
+  if (!isProduction) {
+    console.log("Starting server in DEVELOPMENT mode with Vite dev middleware...");
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "spa",
     });
     app.use(vite.middlewares);
   } else {
+    console.log("Starting server in PRODUCTION mode serving static assets from dist...");
     const distPath = path.join(process.cwd(), "dist");
     app.use(express.static(distPath));
     app.get("*", (req, res) => {
